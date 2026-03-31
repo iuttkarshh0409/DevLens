@@ -18,8 +18,8 @@ const AnimatedScore = ({ value }) => {
 
   useEffect(() => {
     const controls = animate(0, value, {
-      duration: 1.5,
-      ease: "easeOut",
+      duration: 0.8,
+      ease: [0.16, 1, 0.3, 1], // Custom cubic-bezier for snappy, premium feel
       onUpdate: (latest) => setDisplayValue(latest),
     });
     return () => controls.stop();
@@ -80,8 +80,15 @@ const PremiumButton = ({ children, onClick, disabled, className, variant = 'prim
 
   return (
     <motion.button
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
+      whileHover={disabled ? {} : { 
+        scale: 1.02, 
+        y: -2,
+        transition: { duration: 0.2, ease: "easeOut" } 
+      }}
+      whileTap={disabled ? {} : { 
+        scale: 0.98,
+        y: 0 
+      }}
       onClick={onClick}
       disabled={disabled}
       className={cn(
@@ -169,9 +176,10 @@ export default function App() {
     <div className="min-h-screen bg-[#020617] text-slate-200 font-sans selection:bg-sky-500/30 relative overflow-hidden">
       {/* GLOBAL BACKGROUND EFFECTS */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-sky-500/5 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/5 blur-[120px] animate-pulse delay-700" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-sky-500/10 glow-pulse-subtle" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/10 glow-pulse-subtle [animation-delay:2s]" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/5 via-transparent to-indigo-500/5 animate-gradient-shift" />
       </div>
 
       <AnimatePresence mode="wait">
@@ -179,15 +187,16 @@ export default function App() {
         {view === 'LANDING' && (
           <motion.div 
             key="landing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 max-w-4xl mx-auto pt-32 pb-12 px-6 text-center space-y-16"
           >
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
+              transition={{ duration: 0.5 }}
               className="space-y-8"
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-sky-500/20 bg-sky-500/5 text-sky-400 text-xs font-black uppercase tracking-widest">
@@ -205,13 +214,19 @@ export default function App() {
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="relative max-w-2xl mx-auto"
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="relative max-w-2xl mx-auto group"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-purple-600 rounded-3xl blur opacity-20 group-focus-within:opacity-40 transition" />
+              <motion.div 
+                className="absolute -inset-0.5 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-3xl blur-md opacity-20 transition-all duration-300 group-within:opacity-60 group-within:blur-lg"
+                animate={repoUrl.length > 5 ? { 
+                  opacity: [0.3, 0.6, 0.3],
+                  transition: { duration: 3, repeat: Infinity }
+                } : {}}
+              />
               <div className="relative bg-slate-900/80 border border-white/10 p-2 rounded-3xl flex flex-col md:flex-row gap-2">
-                <div className="flex-1 flex items-center px-6 gap-4 bg-transparent group">
-                  <Github className="w-6 h-6 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
+                <div className="flex-1 flex items-center px-6 gap-4 bg-transparent">
+                  <Github className="w-6 h-6 text-slate-500 group-within:text-sky-400 transition-colors" />
                   <input 
                     type="text"
                     placeholder="URL: github.com/user/project"
@@ -221,10 +236,10 @@ export default function App() {
                     onKeyDown={(e) => e.key === 'Enter' && performAudit(repoUrl)}
                   />
                   <motion.button 
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ scale: 1.1, color: "#38bdf8" }}
                     whileTap={{ scale: 0.9 }}
                     onClick={handlePaste} 
-                    className="text-slate-500 hover:text-sky-400 p-2"
+                    className="text-slate-500 transition-colors p-2"
                   >
                     <Clipboard className="w-5 h-5" />
                   </motion.button>
@@ -237,8 +252,8 @@ export default function App() {
 
             {error && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 className="max-w-md mx-auto p-5 bg-rose-500/5 backdrop-blur-md border border-rose-500/20 text-rose-400 rounded-3xl flex items-center gap-4"
               >
                 <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center flex-shrink-0 font-black">!</div>
@@ -252,9 +267,10 @@ export default function App() {
         {view === 'LOADING' && (
           <motion.div 
             key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="relative z-10 flex flex-col items-center justify-center pt-48 space-y-12 px-6 text-center"
           >
             <div className="relative">
@@ -265,8 +281,8 @@ export default function App() {
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Github className="w-10 h-10 text-sky-500" />
                 </motion.div>
@@ -292,33 +308,43 @@ export default function App() {
         {view === 'RESULTS' && data && (
           <motion.div 
             key="results"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-10 max-w-6xl mx-auto p-6 md:p-12 space-y-16"
           >
             {/* Header */}
-            <div className="flex justify-between items-center pb-8 border-b border-white/5">
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-between items-center pb-8 border-b border-white/5"
+            >
                 <PremiumButton variant="ghost" onClick={() => setView('LANDING')} className="px-0">
                   <ArrowRight className="w-5 h-5 rotate-180" /> <span className="uppercase tracking-widest text-[10px] font-black">New Audit</span>
                 </PremiumButton>
                 <PremiumButton onClick={handleSaveAnalysis} variant="secondary">
                   <Download className="w-4 h-4" /> Save Analysis
                 </PremiumButton>
-            </div>
+            </motion.div>
 
             {/* Main Section */}
             <section className="relative group text-center space-y-8">
                 {/* Score Glow Background */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-sky-500/20 blur-[100px] pointer-events-none group-hover:bg-sky-500/30 transition-all duration-700" />
+                <motion.div 
+                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-sky-500/10 blur-[120px] pointer-events-none group-hover:bg-sky-500/20 transition-all duration-700" 
+                />
                 
                 <motion.div 
-                  initial={{ scale: 0.8, opacity: 0 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", damping: 12 }}
+                  transition={{ type: "spring", damping: 15, stiffness: 100 }}
                   className="relative space-y-6"
                 >
                     <span className="text-slate-500 text-xs font-black uppercase tracking-[0.2em] relative z-10">Recruiter Scorecard</span>
-                    <div className="text-[10rem] md:text-[14rem] font-black text-white drop-shadow-[0_0_50px_rgba(255,255,255,0.1)] leading-none font-mono">
+                    <div className="text-[10rem] md:text-[14rem] font-black text-white drop-shadow-[0_0_50px_rgba(255,255,255,0.1)] leading-none font-mono tracking-tighter">
                       <AnimatedScore value={data.score} />
                     </div>
                     <div className="flex justify-center">
@@ -365,39 +391,7 @@ export default function App() {
                     </div>
                     <div className="space-y-4">
                         {data.checklist.map((item, id) => (
-                           <motion.details 
-                             key={id} 
-                             whileHover={{ x: 4 }}
-                             className="group bg-white/5 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-white/10 transition-all border-l-4 border-l-amber-500/50"
-                           >
-                                <summary className="flex items-center justify-between p-5 list-none">
-                                    <div className="flex items-center gap-3">
-                                        {item.impact === 'High' ? (
-                                            <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
-                                        ) : (
-                                            <div className="w-2 h-2 rounded-full bg-amber-500" />
-                                        )}
-                                        <span className="font-bold text-slate-200 text-sm">{item.title}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className={cn(
-                                        "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
-                                        item.impact === 'High' ? 'text-rose-400 border-rose-500/20 bg-rose-500/5' : 'text-slate-500 border-white/5 bg-white/5'
-                                      )}>
-                                          {item.impact}
-                                      </span>
-                                      <motion.div animate={{ rotate: 0 }} className="group-open:rotate-180 transition-transform">
-                                          <ArrowRight className="w-4 h-4 rotate-90" />
-                                      </motion.div>
-                                    </div>
-                                </summary>
-                                <div className="px-5 pb-5 space-y-4 text-xs leading-relaxed border-t border-white/5 pt-4">
-                                    <div className="flex gap-2">
-                                        <div className="w-1 bg-sky-500/50 rounded-full" />
-                                        <p className="text-slate-400 font-medium">{item.hiring_impact || item.reasoning}</p>
-                                    </div>
-                                </div>
-                           </motion.details>
+                           <ChecklistItem key={id} item={item} />
                         ))}
                     </div>
                 </Card>
@@ -416,20 +410,20 @@ export default function App() {
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.5 + (id * 0.05) }}
-                            className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-white/5"
+                            className="group flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-white/5 hover:bg-white/[0.04] transition-colors"
                            >
                                 <div className="flex items-center gap-3">
                                   {audit.passed ? (
-                                      <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                      <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
                                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                       </div>
                                   ) : (
-                                      <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                                      <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20 group-hover:scale-110 transition-transform">
                                         <AlertCircle className="w-4 h-4 text-rose-500" />
                                       </div>
                                   )}
                                   <span className={cn(
-                                    "text-sm font-bold",
+                                    "text-sm font-bold transition-all",
                                     audit.passed ? "text-slate-200" : "text-slate-500 line-through decoration-slate-600/50"
                                   )}>{audit.label}</span>
                                 </div>
@@ -443,7 +437,69 @@ export default function App() {
       </AnimatePresence>
 
       {/* CUSTOM CURSOR EFFECT (SUBTLE) */}
-      <div className="hidden lg:block fixed inset-0 pointer-events-none mix-blend-screen opacity-20 bg-[radial-gradient(circle_at_var(--x)_var(--y),_#38bdf8_0%,_transparent_20%)]" />
+      <motion.div 
+        animate={{ opacity: [0.1, 0.2, 0.1] }}
+        transition={{ duration: 4, repeat: Infinity }}
+        className="hidden lg:block fixed inset-0 pointer-events-none mix-blend-screen bg-[radial-gradient(circle_at_var(--x)_var(--y),_#38bdf8_0%,_transparent_20%)]" 
+      />
     </div>
   );
 }
+
+const ChecklistItem = ({ item }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <motion.div 
+      layout
+      whileHover={{ x: 4 }}
+      className="group bg-white/5 border border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:border-white/10 transition-all border-l-4 border-l-amber-500/50"
+      onClick={() => setIsOpen(!isOpen)}
+    >
+      <div className="flex items-center justify-between p-5 select-none">
+        <div className="flex items-center gap-3">
+          {item.impact === 'High' ? (
+            <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]" />
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+          )}
+          <span className="font-bold text-slate-200 text-sm">{item.title}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className={cn(
+            "text-[9px] font-black uppercase px-2 py-0.5 rounded-full border",
+            item.impact === 'High' ? 'text-rose-400 border-rose-500/20 bg-rose-500/5' : 'text-slate-500 border-white/5 bg-white/5'
+          )}>
+            {item.impact}
+          </span>
+          <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
+            <ArrowRight className="w-4 h-4 rotate-90" />
+          </motion.div>
+        </div>
+      </div>
+      
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="px-5 pb-5 overflow-hidden"
+          >
+            <motion.div 
+              initial={{ y: -10 }}
+              animate={{ y: 0 }}
+              className="space-y-4 text-xs leading-relaxed border-t border-white/5 pt-4"
+            >
+              <div className="flex gap-2">
+                <div className="w-1 bg-sky-500/50 rounded-full" />
+                <p className="text-slate-400 font-medium">{item.hiring_impact || item.reasoning}</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
